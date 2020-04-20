@@ -25,7 +25,7 @@ function Invoke-RadarrRestMethod {
         [ValidateSet(
             "GET",
             "POST"
-            )]
+        )]
         [string]
         $Method,
 
@@ -33,13 +33,16 @@ function Invoke-RadarrRestMethod {
         $Endpoint,
 
         [string]
-        $Command
+        $Command,
+
+        [PSObject]
+        $Body
     )
     
     begin {
         $InvokeRestMethodHash = @{
-            URI = $script:configuration.URL + $Endpoint
-            Method = $Method
+            URI     = $script:configuration.URL + $Endpoint
+            Method  = $Method
             Headers = @{
                 'X-Api-Key' = $script:configuration.API
             }
@@ -49,6 +52,15 @@ function Invoke-RadarrRestMethod {
     process {
         if ($PSBoundParameters.ContainsKey('Command')) {
             $InvokeRestMethodHash["URI"] = $script:configuration.URL + $Endpoint + $Command
+        }
+
+        if ($PSBoundParameters.ContainsKey('Command') -and ($PSBoundParameters.ContainsKey('Body'))) {
+            $InvokeRestMethodHash["URI"] = $script:configuration.URL + $Endpoint + $Command
+            $InvokeRestMethodHash["Body"] = $Body
+        }
+
+        if ($PSBoundParameters.ContainsKey('Body')) {
+            $InvokeRestMethodHash["Body"] = $Body
         }
 
         Invoke-RestMethod @InvokeRestMethodHash 
@@ -75,16 +87,15 @@ function Get-RadarrMovie {
 
 }
 
-
 function Find-RadarrMovie {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]
         [ValidateSet(
-            "Lookup",
+            "Name",
             "TMDB",
             "IMDB"
-            )]
+        )]
         [string]
         $SearchMethod,
 
@@ -93,7 +104,7 @@ function Find-RadarrMovie {
     )
 
     switch ($SearchMethod) {
-        "Lookup" {  
+        "Name" {  
 
             ## Add %20 to spaces in the name
             $value = [uri]::EscapeDataString($SearchValue)
@@ -114,8 +125,61 @@ function Find-RadarrMovie {
             Invoke-RadarrRestMethod -Method 'GET' -Endpoint '/movie/lookup/imdb' -Command "?imdbId=$SearchValue"
 
         }
-        Default {}
+        Default { }
     }
+}
+
+function Get-RadarrProfile {
+    [CmdletBinding()]
+    param (
+        
+    )
+    
+    $script:configuration.Profiles
+
+}
+
+function Add-RadarrMovie {
+    [CmdletBinding()]
+    param (
+        [PSObject]
+        $SearchResults,
+
+        [string]
+        $ProfileID,
+
+        [switch]
+        $Monitored,
+
+        [switch]
+        $SearchForMovie
+    )
+
+    $CoverImage = $SearchResults.covertype | Where-Object {$_ -eq "Poster"}
+
+    ## Add a movie from non4K to 4K
+    $params = @{
+        title            = $SearchResults.title
+        qualityProfileId = $ProfileID
+        titleSlug        = $SearchResults.titleslug  
+        images           = @(
+            @{
+                covertype = $CoverImage.covertype
+                url       = $CoverImage.url
+            }
+        )
+        tmdbId           = $SearchResults.tmdbid
+        profileId        = $ProfileID
+        year             = $SearchResults.year
+        rootfolderpath             = Get-RadarrRootFolder
+        monitored        = $true
+        addoptions       = @{
+            searchForMovie = $true
+        }
+    } | ConvertTo-Json
+
+    Invoke-RadarrRestMethod -Method "POST" -Endpoint "/movie" -Body $Params
+
 }
 
 function Get-RadarrRootFolder {
