@@ -13,6 +13,9 @@ function Set-RadarrConfig {
         API = $API
     }    
 
+    $script:configuration["RootFolder"] = (Invoke-RadarrRestMethod -Method "GET" -Endpoint "/rootfolder").Path      
+    $script:configuration["Profiles"] = Invoke-RadarrRestMethod -Method "GET" -Endpoint "/profile"      
+
 }
 
 function Invoke-RadarrRestMethod {
@@ -35,7 +38,7 @@ function Invoke-RadarrRestMethod {
     
     begin {
         $InvokeRestMethodHash = @{
-            URI = $script:configuration.URL
+            URI = $script:configuration.URL + $Endpoint
             Method = $Method
             Headers = @{
                 'X-Api-Key' = $script:configuration.API
@@ -45,13 +48,96 @@ function Invoke-RadarrRestMethod {
     
     process {
         if ($PSBoundParameters.ContainsKey('Command')) {
-            $InvokeRestMethodHash.Update("URI", $script:configuration.URL + $Endpoint + $Command)
+            $InvokeRestMethodHash["URI"] = $script:configuration.URL + $Endpoint + $Command
         }
-        
+
         Invoke-RestMethod @InvokeRestMethodHash 
     }
     
     end {
         
     }
+}
+
+function Get-RadarrMovie {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]
+        $ID
+    )
+
+    Invoke-RadarrRestMethod -Method "GET" -Endpoint "/movie/$ID"
+
+}
+
+function Find-RadarrMovie {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [ValidateSet(
+            "Lookup",
+            "TMDB",
+            "IMDB"
+            )]
+        [string]
+        $SearchMethod,
+
+        [string]
+        $SearchValue
+    )
+
+    switch ($SearchMethod) {
+        "Lookup" {  
+
+            ## Add %20 to spaces in the name
+            $value = [uri]::EscapeDataString($SearchValue)
+
+            ## Search for movie using the name
+            Invoke-RadarrRestMethod -Method 'GET' -Endpoint '/movie/lookup' -Command "?term=$value"
+
+        }
+        "TMDB" {  
+
+            ## Search for movie using TMDB ID
+            Invoke-RadarrRestMethod -Method 'GET' -Endpoint '/movie/lookup/tmdb' -Command "?tmdbId=$SearchValue"
+
+        }
+        "IMDB" {  
+
+            ## Search for movie using TMDB ID
+            Invoke-RadarrRestMethod -Method 'GET' -Endpoint '/movie/lookup/imdb' -Command "?imdbId=$SearchValue"
+
+        }
+        Default {}
+    }
+}
+
+function Get-RadarrRootFolder {
+    [CmdletBinding()]
+    param (
+        
+    )
+
+    $script:configuration["RootFolder"] = (Invoke-RadarrRestMethod -Method "GET" -Endpoint "/rootfolder").Path      
+
+    $script:configuration.RootFolder
+}
+
+function Get-RadarrSystemStatus {
+    [CmdletBinding()]
+    param (
+        
+    )
+    
+    Invoke-RadarrRestMethod -Method "GET" -Endpoint "/system/status"
+}
+
+function Get-RadarrRecommendations {
+    [CmdletBinding()]
+    param (
+        
+    )
+    
+    Invoke-RadarrRestMethod -Method "GET" -Endpoint "/movies/discover/recommendations"
 }
