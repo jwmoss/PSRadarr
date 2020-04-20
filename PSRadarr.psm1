@@ -62,14 +62,19 @@ function Invoke-RadarrRestMethod {
 function Get-RadarrMovie {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $true)]
         [string]
         $ID
     )
 
-    Invoke-RadarrRestMethod -Method "GET" -Endpoint "/movie/$ID"
+    if ($PSBoundParameters.ContainsKey('ID')) {
+        Invoke-RadarrRestMethod -Method "GET" -Endpoint "/movie/$ID"
+    }
+    else {
+        Invoke-RadarrRestMethod -Method "GET" -Endpoint "/movie"
+    }
 
 }
+
 
 function Find-RadarrMovie {
     [CmdletBinding()]
