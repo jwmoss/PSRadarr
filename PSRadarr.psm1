@@ -235,23 +235,23 @@ function Sync-RadarrInstance {
 
     ## Loop through each movie in the source library
     foreach ($movie in $Source[0..$Max]) {
-        
+
         ## If the movie in source library is not in the destination library, do stuff
         if ($movie.tmdbid -notin $Destination.tmdbid) {
             
             ## If you want to monitor and search for the movie
             if ($PSBoundParameters.ContainsKey('Monitored') -and ($PSBoundParameters.ContainsKey('SearchForMovie'))) {
-                #Add-RadarrMovie -SearchResults $movie -ProfileID $DestinationProfileID -Monitored -SearchForMovie
+                Add-RadarrMovie -SearchResults $movie -ProfileID $DestinationProfileID -Monitored -SearchForMovie
             } 
             
             ## If you want to monitor the movie
             if ($PSBoundParameters.ContainsKey('Monitored')) {
-                #Add-RadarrMovie -SearchResults $movie -ProfileID $DestinationProfileID -Monitored
+                Add-RadarrMovie -SearchResults $movie -ProfileID $DestinationProfileID -Monitored
             }       
             
             ## If you want to search for the movie
             if ($PSBoundParameters.ContainsKey('SearchForMovie')) {
-                #Add-RadarrMovie -SearchResults $movie -ProfileID $DestinationProfileID -SearchForMovie
+                Add-RadarrMovie -SearchResults $movie -ProfileID $DestinationProfileID -SearchForMovie
             }   
         }   
     }
