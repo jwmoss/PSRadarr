@@ -210,3 +210,49 @@ function Get-RadarrRecommendations {
     
     Invoke-RadarrRestMethod -Method "GET" -Endpoint "/movies/discover/recommendations"
 }
+
+function Sync-RadarrInstance {
+    [CmdletBinding()]
+    param (
+        [PSObject]
+        $Source,
+
+        [PSObject]
+        $Destination,
+
+        [string]
+        $DestinationProfileID,
+
+        [int]
+        $Max,
+
+        [switch]
+        $Monitored,
+
+        [switch]
+        $SearchForMovie
+    )
+
+    ## Loop through each movie in the source library
+    foreach ($movie in $Source[0..$Max]) {
+        
+        ## If the movie in source library is not in the destination library, do stuff
+        if ($movie.tmdbid -notin $Destination.tmdbid) {
+            
+            ## If you want to monitor and search for the movie
+            if ($PSBoundParameters.ContainsKey('Monitored') -and ($PSBoundParameters.ContainsKey('SearchForMovie'))) {
+                #Add-RadarrMovie -SearchResults $movie -ProfileID $DestinationProfileID -Monitored -SearchForMovie
+            } 
+            
+            ## If you want to monitor the movie
+            if ($PSBoundParameters.ContainsKey('Monitored')) {
+                #Add-RadarrMovie -SearchResults $movie -ProfileID $DestinationProfileID -Monitored
+            }       
+            
+            ## If you want to search for the movie
+            if ($PSBoundParameters.ContainsKey('SearchForMovie')) {
+                #Add-RadarrMovie -SearchResults $movie -ProfileID $DestinationProfileID -SearchForMovie
+            }   
+        }   
+    }
+}
