@@ -155,7 +155,7 @@ function Add-RadarrMovie {
         $SearchForMovie
     )
 
-    $CoverImage = $SearchResults.covertype | Where-Object {$_ -eq "Poster"}
+    $CoverImage = $SearchResults.covertype | Where-Object { $_ -eq "Poster" }
 
     ## Add a movie from non4K to 4K
     $params = @{
@@ -171,7 +171,7 @@ function Add-RadarrMovie {
         tmdbId           = $SearchResults.tmdbid
         profileId        = $ProfileID
         year             = $SearchResults.year
-        rootfolderpath             = Get-RadarrRootFolder
+        rootfolderpath   = Get-RadarrRootFolder
         monitored        = $true
         addoptions       = @{
             searchForMovie = $true
@@ -187,8 +187,6 @@ function Get-RadarrRootFolder {
     param (
         
     )
-
-    $script:configuration["RootFolder"] = (Invoke-RadarrRestMethod -Method "GET" -Endpoint "/rootfolder").Path      
 
     $script:configuration.RootFolder
 }
@@ -234,28 +232,59 @@ function Sync-RadarrInstance {
     )
 
     ## Loop through each movie in the source library
-    foreach ($movie in $Source[0..$Max]) {
-        Write-Verbose "Processing $($movie.Title)"
-        ## If the movie in source library is not in the destination library, do stuff
-        if ($movie.tmdbid -notin $Destination.tmdbid) {
-            Write-Verbose "Adding $($movie.Title) to destination library"
-            ## If you want to monitor and search for the movie
-            if ($PSBoundParameters.ContainsKey('Monitored') -and ($PSBoundParameters.ContainsKey('SearchForMovie'))) {
-                Write-Verbose "Adding $($movie.Title) to Destination Library, searching and monitoring it."
-                Add-RadarrMovie -SearchResults $movie -ProfileID $DestinationProfileID -Monitored -SearchForMovie
-            } 
-            
-            ## If you want to monitor the movie
-            if ($PSBoundParameters.ContainsKey('Monitored')) {
-                Write-Verbose "Adding $($movie.Title) to Destination Library, and monitoring it."
-                Add-RadarrMovie -SearchResults $movie -ProfileID $DestinationProfileID -Monitored
-            }       
-            
-            ## If you want to search for the movie
-            if ($PSBoundParameters.ContainsKey('SearchForMovie')) {
-                Write-Verbose "Adding $($movie.Title) to Destination Library, and searching for the movie."
-                Add-RadarrMovie -SearchResults $movie -ProfileID $DestinationProfileID -SearchForMovie
+    
+    if (-not $PSBoundParameters.ContainsKey('Max')) {
+        foreach ($movie in $Source) {
+            #Write-Verbose "Processing $($movie.Title)"
+            ## If the movie in source library is not in the destination library, do stuff
+            if ($movie.tmdbid -notin $Destination.tmdbid) {
+                Write-Verbose "Adding $($movie.Title) to destination library"
+                ## If you want to monitor and search for the movie
+                if ($PSBoundParameters.ContainsKey('Monitored') -and ($PSBoundParameters.ContainsKey('SearchForMovie'))) {
+                    Write-Verbose "Adding $($movie.Title) to Destination Library, searching and monitoring it."
+                    Add-RadarrMovie -SearchResults $movie -ProfileID $DestinationProfileID -Monitored -SearchForMovie
+                } 
+                
+                ## If you want to monitor the movie
+                if ($PSBoundParameters.ContainsKey('Monitored')) {
+                    Write-Verbose "Adding $($movie.Title) to Destination Library, and monitoring it."
+                    Add-RadarrMovie -SearchResults $movie -ProfileID $DestinationProfileID -Monitored
+                }       
+                
+                ## If you want to search for the movie
+                if ($PSBoundParameters.ContainsKey('SearchForMovie')) {
+                    Write-Verbose "Adding $($movie.Title) to Destination Library, and searching for the movie."
+                    Add-RadarrMovie -SearchResults $movie -ProfileID $DestinationProfileID -SearchForMovie
+                }   
             }   
-        }   
+        }  
+    }
+
+    if ($PSBoundParameters.ContainsKey('Max')) {
+        Write-Verbose -Message "Processing the first $Max"
+        foreach ($movie in $Source[0..$Max]) {
+            Write-Verbose "Processing $($movie.Title)"
+            ## If the movie in source library is not in the destination library, do stuff
+            if ($movie.tmdbid -notin $Destination.tmdbid) {
+                Write-Verbose "Adding $($movie.Title) to destination library"
+                ## If you want to monitor and search for the movie
+                if ($PSBoundParameters.ContainsKey('Monitored') -and ($PSBoundParameters.ContainsKey('SearchForMovie'))) {
+                    Write-Verbose "Adding $($movie.Title) to Destination Library, searching and monitoring it."
+                    Add-RadarrMovie -SearchResults $movie -ProfileID $DestinationProfileID -Monitored -SearchForMovie
+                } 
+                
+                ## If you want to monitor the movie
+                if ($PSBoundParameters.ContainsKey('Monitored')) {
+                    Write-Verbose "Adding $($movie.Title) to Destination Library, and monitoring it."
+                    Add-RadarrMovie -SearchResults $movie -ProfileID $DestinationProfileID -Monitored
+                }       
+                
+                ## If you want to search for the movie
+                if ($PSBoundParameters.ContainsKey('SearchForMovie')) {
+                    Write-Verbose "Adding $($movie.Title) to Destination Library, and searching for the movie."
+                    Add-RadarrMovie -SearchResults $movie -ProfileID $DestinationProfileID -SearchForMovie
+                }   
+            }   
+        }
     }
 }
