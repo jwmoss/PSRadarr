@@ -5,6 +5,8 @@ PowerShell wrapper around Radarr API with PowerShell 7
 ## Example
 
 ```PowerShell
+Import-Module ./path/to/PSRadarr.psm1
+
 Set-RadarrConfig -URL "http://radarrnon4k:port/api" -API $env:non4kapi
 
 $non4kmovies = Get-RadarrMovie
